@@ -92,7 +92,7 @@ php -S 0.0.0.0:8890 -t /sti/til/ladestyring /sti/til/ladestyring/router.php
 | `router.php` | Router til PHP's indbyggede webserver |
 | `Dockerfile`, `docker-compose.yml`, `docker-entrypoint.sh` | Containeren |
 | `start-ladestyring.cmd` | Start på Windows |
-| `php2html.lib.php`, `_trans.sys.json`, `favicon.svg` | php2html 1.9.0 |
+| `php2html.lib.php`, `_trans.sys.json`, `favicon.svg` | php2html 1.9.1 |
 
 ## Licens
 

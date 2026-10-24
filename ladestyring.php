@@ -1,10 +1,11 @@
-<?php   $DocFil= 'ladestyring.php';   $DocVer='1.3.0';   $DocRev='2026-10-24';   $DocIni='evs';   $ModulNr=0;
+<?php   $DocFil= 'ladestyring.php';   $DocVer='1.4.0';   $DocRev='2026-10-24';   $DocIni='evs';   $ModulNr=0;
 # Ladestyring: tænder et laderelæ (Tuya, Shelly, eWeLink) i døgnets billigste timer - DK2, spotpris + nettarif.
 if (session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params(['path' => '/', 'httponly' => true, 'samesite' => 'Lax', 'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off']);
     session_start();
 }
 if (empty($_SESSION['proglang'])) $_SESSION['proglang']= 'da';
+$lang= 'da';                                                        # php2html: the texts of the library (log in, messages) in Danish
 require_once (__DIR__.'/ladestyring.lib.php');
 require_once (__DIR__.'/php2html.lib.php');
 
@@ -13,7 +14,7 @@ $msg= '';  $kind= 'success';
 $self= strtok($_SERVER['REQUEST_URI'] ?? 'ladestyring.php', '?');
 $base= (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http').'://'.($_SERVER['HTTP_HOST'] ?? 'localhost');
 $redirect= $base.$self.'?ewelink=1';
-$in= !empty($_SESSION['ep_in']);
+$in= sys_loginUser() > '';                                          # php2html: sys_login() / htm_Login()
 function ep_enc($t) { return htmlspecialchars((string)$t, ENT_QUOTES, 'UTF-8'); }
 function ep_btn($act, $labl, $kind= 'navi', $icon= '', $hint= '', $extra= '') {
     $c= ['save' => '#0064b4;color:#fff', 'eras' => 'crimson;color:#fff', 'goon' => '#66cdaa;color:#000', 'navi' => '#1a6e1a;color:#fff'][$kind] ?? '#1a6e1a;color:#fff';
@@ -26,25 +27,18 @@ function ep_go($msg, $kind= 'success') { $_SESSION['ep_msg']= [$msg, $kind];  he
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_verify()) ep_go('Siden var for gammel - prøv igen', 'warning');
     $act= (string)($_POST['act'] ?? '');
-    if ($act === 'login') {
-        $wait= ep_read('state.json')['login_wait'] ?? 0;                # Fælles spærring for alle (ikke pr. browser)
-        if ($wait > time()) ep_go('Spærret efter forkerte forsøg - prøv igen kl. '.date('H:i:s', $wait), 'warning');
-        $st= ep_read('state.json');
-        if ($s['pass_hash'] !== '' && password_verify((string)($_POST['pwd'] ?? ''), $s['pass_hash'])) {
-            $st['login_fails']= 0;  ep_write('state.json', $st);
-            session_regenerate_id(true);  $_SESSION['ep_in']= true;  ep_go('Du er logget ind');
-        }
-        $f= ($st['login_fails'] ?? 0) + 1;                              # 5 s, 10 s, 20 s ... højst 15 min
-        $st['login_fails']= $f;  $st['login_wait']= time() + min(900, 5 * 2 ** min($f - 1, 8));  ep_write('state.json', $st);
+    if (($_POST['p2h_act'] ?? '') === 'login') {                        # htm_Login() - sys_login(): 5 s, 10 s, 20 s ... højst 15 min efter forkerte forsøg (for alle)
+        $e= sys_login(hash:$s['pass_hash'], pass:(string)($_POST['p2h_pass'] ?? ''), file:ep_file('login.json'));
+        if ($e === '') ep_go('Du er logget ind');
         $ip= $_SERVER['REMOTE_ADDR'] ?? '?';
         if (in_array($ip, ['127.0.0.1', '::1'], true) && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) $ip= trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]).' (via proxy)';
-        ep_log('Forkert adgangskode nr. '.$f.' fra '.$ip);
-        ep_go('Forkert adgangskode', 'error');
+        ep_log('Login afvist fra '.$ip.': '.$e);
+        ep_go($e, 'error');
     }
     if (!$in) ep_go('Log ind først', 'warning');
     $st= ep_read('state.json');
     switch ($act) {
-        case 'logout': $_SESSION= [];  session_destroy();  header('Location: '.$self);  exit;
+        case 'logout': sys_logout();  ep_go('Du er logget ud', 'info');
         case 'on': case 'off':
             $h= max(0.25, min(24, (float)str_replace(',', '.', $_POST['for'] ?? 1)));
             $st['override']= ['on' => $act === 'on', 'until' => time() + (int)($h * 3600)];
@@ -130,13 +124,11 @@ echo '<h1 style="margin:10px 0 6px; font-size:26px; color:#1a6e1a"><i class="fas
 if ($msg !== '') htm_Alert(body:ep_enc($msg), kind:$kind);
 
 if (!$in) {
-    htm_Card_(capt:'Log ind', icon:'fas fa-bolt', hint:'', form:'f_login', clas:'cardW320', show:false, poup:false);
-    if ($s['pass_hash'] === '')
+    if ($s['pass_hash'] === '') {
+        htm_Card_(capt:'Log ind', icon:'fas fa-bolt', hint:'', clas:'cardW320', show:false, poup:false);
         echo '<p>Der er ikke sat en adgangskode endnu. Kør på serveren:<br><code>php ladestyring-setpass.php</code></p>';
-    else
-        echo '<p><label>Adgangskode<br><input type="password" name="pwd" autocomplete="current-password" required autofocus style="width:90%; padding:4px"></label></p>'.
-             ep_btn('login', 'Log ind', 'save', 'fas fa-right-to-bracket');
-    htm_Card_end();
+        htm_Card_end();
+    } else htm_Login(capt:'Log ind', icon:'fas fa-bolt');            # php2html: adgangskode med vis / skjul og Caps Lock-advarsel
     htm_Page_end();
     exit;
 }
