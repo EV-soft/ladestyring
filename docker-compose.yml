@@ -1,0 +1,11 @@
+# docker-compose.yml v:1.1.0 d:2026-10-24 i:evs
+# Start på Synology (SSH, i denne mappe):  sudo docker-compose up -d --build
+version: "3"
+services:
+  ladestyring:
+    build: .
+    container_name: ladestyring
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - .:/app

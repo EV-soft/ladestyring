@@ -1,0 +1,12 @@
+# Ladestyring - aldrig i git
+# Indstillinger (local key, adgangskode-hash, cron-nøgle), log med IP-adresser, priser og plan:
+data/
+# CSS/JS som php2html laver selv:
+_cache/
+# Fra "python -m tinytuya wizard" / "scan" - Access Secret, local keys og enheder på hjemmenettet:
+tinytuya.json
+devices.json
+tuya-raw.json
+snapshot.json
+*.tmp
+*.bak

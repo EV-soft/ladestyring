@@ -1,0 +1,7 @@
+# Linjeskift: scripts til Linux / containeren altid LF - Windows-scriptet altid CRLF
+*.sh                 text eol=lf
+Dockerfile           text eol=lf
+docker-compose.yml   text eol=lf
+.dockerignore        text eol=lf
+*.py                 text eol=lf
+*.cmd                text eol=crlf
