@@ -5,6 +5,8 @@ Styringen kører **lokalt på hjemmenettet** (Synology, Raspberry Pi eller en PC
 
 Bygget med [php2html](https://github.com/EV-soft/Clever-Html-Engine). Kun på dansk, til prisområderne **DK1 / DK2**.
 
+![Ladestyring: elpris i dag og i morgen - de grønne kvarterer lades](docs/skaermbillede.png)
+
 ## Hvad den gør
 
 - Henter **spotprisen** pr. kvarter fra [Energi Data Service](https://www.energidataservice.dk/) (DayAheadPrices) og **nettariffen**
